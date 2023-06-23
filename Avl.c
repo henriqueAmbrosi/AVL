@@ -3,341 +3,306 @@
 #include <ctype.h>
 #include <string.h>
 
-struct a {
+struct a
+{
     char value[50];
     int ocor;
     struct a *esq, *dir, *pai;
-    // Valor que cresce conforme se aproxima da raiz (Funciona quase de forma inversa ao nível da árvore sendo um em todas as folhas)
+    // Valor que cresce conforme se aproxima da raiz (Funciona quase de forma inversa ao nÃ­vel da Ã¡rvore sendo um em todas as folhas)
     int altura;
 };
 
 typedef struct a Avl;
 
-
 // Retorna a altura ou zero caso o nodo esteja nulo
-int getAltura(Avl* node) {
+int getAltura(Avl *node)
+{
     if (node == NULL)
         return 0;
     return node->altura;
 }
 
 // Calcula o fator de balanceamento de um nodo
-int getFatorBalanceamento(Avl* node) {
-   if (node == NULL)
+int getFatorBalanceamento(Avl *node)
+{
+    if (node == NULL)
         return 0;
-    return getAltura(node->esq) - getAltura(node->dir);
+    return getAltura(node->dir) - getAltura(node->esq);
 }
 
 // Inicializa ou reseta o header
-void init(Avl* letra[]){
+void init(Avl *letra[])
+{
     int i;
-    for(i = 0; i < 26; i++){
+    for (i = 0; i < 26; i++)
+    {
         letra[i] = NULL;
     }
 }
 
-// Rotação para a esquerda
-// A rotação principal deve ser 0 se for somente para corrigir o sinal
-// E 1 caso contrário
-void rpe(Avl **nodo, Avl* letra[]){
-    Avl* no = *nodo;
-    Avl* dir = no->dir;
+// RotaÃ§Ã£o para a esquerda
+void rpe(Avl **nodo, Avl *letra[])
+{
+    Avl *no = *nodo;
+    Avl *dir = no->dir;
 
     // Rotaciona
     no->dir = dir->esq;
-    if(dir->esq != NULL){
+    if (dir->esq != NULL)
+    {
         // Atualiza pai do antigo nodo da esquerda da nova raiz para a raiz antiga
         dir->esq->pai = no;
     }
     dir->esq = (*nodo);
 
     // Atualiza os pais
-    printf("teste: %s\n", (*nodo)->value);
     dir->pai = no->pai;
-    printf("teste: %s\n", (*nodo)->value);
     no->pai = dir;
 
     // Atualiza alturas
     no->altura = 1 + (getAltura(no->dir) > getAltura(no->esq) ? getAltura(no->dir) : getAltura(no->esq));
     dir->altura = 1 + (no->altura > getAltura(dir->dir) ? no->altura : getAltura(dir->dir));
 
-     // Atualiza a referência do vô
-    if(dir->pai != NULL){
-        if(strcmp(dir->pai->value, dir->value) < 0){
+    // Atualiza a referÃªncia do vÃ´
+    if (dir->pai != NULL)
+    {
+        if (strcmp(dir->pai->value, dir->value) < 0)
+        {
             dir->pai->dir = dir;
-        }else{
+        }
+        else
+        {
             dir->pai->esq = dir;
         }
-    }else{
+    }
+    else
+    {
         // Atualiza o vetor de letras
         letra[dir->value[0] - 'a'] = dir;
     }
 }
 
-// Rotação para a direita
-// A rotação principal deve ser 0 se for somente para corrigir o sinal
-// E 1 caso contrário
-void rpd(Avl **nodo, Avl* letra[]){
-    Avl* no = *nodo;
-    Avl* esq = no->esq;
+// RotaÃ§Ã£o para a direita
+void rpd(Avl **nodo, Avl *letra[])
+{
+    Avl *no = *nodo;
+    Avl *esq = no->esq;
 
     // Rotaciona
     no->esq = esq->dir;
-    if(esq->dir != NULL){
+    if (esq->dir != NULL)
+    {
         // Atualiza pai do antigo nodo da direita da nova raiz para a raiz antiga
         esq->dir->pai = no;
     }
     esq->dir = no;
 
     // Atualiza os pais
-    esq->pai = no->esq;
+    esq->pai = no->pai;
     no->pai = esq;
 
     // Atualiza alturas
     no->altura = 1 + (getAltura(no->esq) > getAltura(no->dir) ? getAltura(no->esq) : getAltura(no->dir));
     esq->altura = 1 + (no->altura > getAltura(esq->esq) ? no->altura : getAltura(esq->esq));
 
-     // Atualiza a referência do vô
-    if(esq->pai != NULL){
-        if(strcmp(esq->pai->value, esq->value) < 0){
+    // Atualiza a referÃªncia do vÃ´
+    if (esq->pai != NULL)
+    {
+        if (strcmp(esq->pai->value, esq->value) < 0)
+        {
             esq->pai->dir = esq;
-        }else{
+        }
+        else
+        {
             esq->pai->esq = esq;
         }
-    }else{
+    }
+    else
+    {
         // Atualiza o vetor de letras
         letra[esq->value[0] - 'a'] = esq;
     }
 }
 
-// Determina a rotação necessária para balancear a árvore
-void rebalancearArvore(Avl **pai, Avl* letra[]){
+// Determina a rotaÃ§Ã£o necessÃ¡ria para balancear a Ã¡rvore
+void rebalancearArvore(Avl **pai, Avl *letra[])
+{
     int fbPai = getFatorBalanceamento(*pai);
     int fbFilho;
-    if(fbPai == 2){
-        // Braço da direita mais pesado: Rotação para a esquerda
+
+    if (fbPai == 2)
+    {
+        // BraÃ§o da direita mais pesado: RotaÃ§Ã£o para a esquerda
 
         fbFilho = getFatorBalanceamento((*pai)->dir);
-        if(fbFilho < 0){
-
-            // Sinais opostos: Rotação dupla
+        if (fbFilho < 0)
+        {
+            // Sinais opostos: RotaÃ§Ã£o dupla
             rpd(&(*pai)->dir, letra);
             rpe(&(*pai)->pai, letra);
-        }else{
-            // Sinais iguais: Rotação simples
+        }
+        else
+        {
+            // Sinais iguais: RotaÃ§Ã£o simples
             rpe(pai, letra);
         }
-    }else{
-        // Braço da esquerda mais pesado: Rotação para a direita
+    }
+    else
+    {
+        // BraÃ§o da esquerda mais pesado: RotaÃ§Ã£o para a direita
 
-        fbFilho = getFatorBalanceamento((*pai)->dir);
-        if(fbFilho > 0){
-            // Sinais opostos: Rotação dupla
+        fbFilho = getFatorBalanceamento((*pai)->esq);
+        if (fbFilho > 0)
+        {
+            // Sinais opostos: RotaÃ§Ã£o dupla
             rpe(&(*pai)->esq, letra);
             rpd(&(*pai)->pai, letra);
-        }else{
-            // Sinais iguais: Rotação simples
+        }
+        else
+        {
+            // Sinais iguais: RotaÃ§Ã£o simples
             rpd(pai, letra);
         }
     }
 }
 
 // Calcula altura dos pais do nodo recursivamente
-void calcularAlturaPai(Avl **pai, Avl* letra[]){
-
+void calcularAlturaPai(Avl **pai, Avl *letra[])
+{
     // Atualiza altura do nodo utilizando a altura do filho mais alto
-    if(getAltura((*pai)->esq) > getAltura((*pai)->dir)){
+    if (getAltura((*pai)->esq) > getAltura((*pai)->dir))
+    {
         // Filho mais alto na esquerda
         (*pai)->altura = getAltura((*pai)->esq) + 1;
-    }else{
+    }
+    else
+    {
         // Filho mais alto na direita
         (*pai)->altura = getAltura((*pai)->dir) + 1;
     }
 
     // Caso encontre um Fator de Balanceamento igual a 2 ou -2, rebalanceia
+
     int fb = getFatorBalanceamento(*pai);
-    if(fb == 2 || fb == -2)
+    if (fb == 2 || fb == -2)
         rebalancearArvore(pai, letra);
 
     // Chama recursivamente
-    if((*pai)->pai != NULL)
+    if ((*pai) != NULL && (*pai)->pai != NULL)
         calcularAlturaPai(&((*pai)->pai), letra);
-
 }
 
-void recalcularAltura(Avl **nodo, Avl* letra[]){
-    printf("%s\n", (*nodo)->value);
-    calcularAlturaPai(&((*nodo)->pai), letra);
+void recalcularAltura(Avl **nodo, Avl *letra[])
+{
+    if (*nodo != NULL && (*nodo)->pai != NULL)
+        calcularAlturaPai(&((*nodo)->pai), letra);
 }
 
-// Cria e insere o nodo na árvore
-void inserirNodo(Avl **pai, char* val, Avl* letra[]){
-    Avl *novo = (Avl*) malloc(sizeof(Avl));
+// Cria e insere o nodo na Ã¡rvore
+void inserirNodo(Avl **pai, char *val, Avl *letra[])
+{
+    Avl *novo = (Avl *)malloc(sizeof(Avl));
     strcpy(novo->value, val);
     novo->ocor = 1;
     novo->altura = 1;
     novo->esq = NULL;
     novo->dir = NULL;
     novo->pai = *pai;
-    if(*pai != NULL && strcmp(val, (*pai)->value) < 0){
+    if (*pai != NULL && strcmp(val, (*pai)->value) < 0)
+    {
         (*pai)->esq = novo;
-    }else if(*pai != NULL){
+    }
+    else if (*pai != NULL)
+    {
         (*pai)->dir = novo;
     }
 
     recalcularAltura(&novo, letra);
 }
 
-// Busca o local para inserir o nodo e insere na árvore com a função de inserirNodo
-void inserirValorNaArvore(char* val, Avl** raiz, Avl* letra[]){
+// Busca o local para inserir o nodo e insere na Ã¡rvore com a funÃ§Ã£o de inserirNodo
+void inserirValorNaArvore(char *val, Avl **raiz, Avl *letra[])
+{
 
-    // Primeira inserção na árvore
-    if(*raiz == NULL){
-        *raiz = (Avl*) malloc(sizeof(Avl));
+    // Primeira inserÃ§Ã£o na Ã¡rvore
+    if (*raiz == NULL)
+    {
+        *raiz = (Avl *)malloc(sizeof(Avl));
         strcpy((*raiz)->value, val);
         (*raiz)->ocor = 1;
         (*raiz)->altura = 1;
         (*raiz)->esq = NULL;
         (*raiz)->dir = NULL;
         (*raiz)->pai = NULL;
-    }else{
+    }
+    else
+    {
         // Segue busca para a esquerda
-        if(strcmp(val, (*raiz)->value) < 0){
-            if((*raiz)->esq == NULL){
+        if (strcmp(val, (*raiz)->value) < 0)
+        {
+            if ((*raiz)->esq == NULL)
+            {
                 inserirNodo(raiz, val, letra);
-            }else{
+            }
+            else
+            {
                 inserirValorNaArvore(val, &((*raiz)->esq), letra);
             }
-        // Segue busca para a direita
-        }else if(strcmp(val, (*raiz)->value) > 0){
-            if((*raiz)->dir == NULL){
+            // Segue busca para a direita
+        }
+        else if (strcmp(val, (*raiz)->value) > 0)
+        {
+            if ((*raiz)->dir == NULL)
+            {
                 inserirNodo(raiz, val, letra);
-            }else{
+            }
+            else
+            {
                 inserirValorNaArvore(val, &((*raiz)->dir), letra);
             }
-        // Já está na árvore
-        }else{
+            // JÃ¡ estÃ¡ na Ã¡rvore
+        }
+        else
+        {
             (*raiz)->ocor += 1;
         }
     }
 }
 
-void printPreFix(Avl* raiz){
-    if( raiz == NULL )
-        return;
-
-    printf("%s - %d - %d\n",raiz->value, raiz->ocor, raiz->altura);
-    printPreFix( raiz->esq );
-    printPreFix( raiz->dir );
-}
-
-void removeComUmFilho(Avl **raiz){
-    if((*raiz)->pai != NULL){
-        // Caso tenha pai
-        if((*raiz)->pai->value > (*raiz)->value){
-            if((*raiz)->esq != NULL){
-                (*raiz)->esq->pai = (*raiz)->pai;
-                (*raiz)->pai->esq = (*raiz)->esq;
-            }else{
-                (*raiz)->dir->pai = (*raiz)->pai;
-                (*raiz)->pai->esq = (*raiz)->dir;
-            }
-
-        }else{
-            if((*raiz)->esq != NULL){
-                (*raiz)->esq->pai = (*raiz)->pai;
-                (*raiz)->pai->dir = (*raiz)->esq;
-            }else{
-                (*raiz)->dir->pai = (*raiz)->pai;
-                (*raiz)->pai->dir = (*raiz)->dir;
-            }
-        }
-    }else{
-        // Caso não tenha pai (chegou na raiz)
-        if((*raiz)->esq != NULL){
-            (*raiz)->esq->pai = NULL;
-            *raiz = (*raiz)->esq;
-        }else{
-            (*raiz)->dir->pai = NULL;
-            *raiz = (*raiz)->dir;
-        }
-    }
-}
-
-void removeFolha(Avl **raiz){
-    if((*raiz)->pai != NULL){
-        if((*raiz)->pai->esq != NULL && (*raiz)->pai->esq->value == (*raiz)->value){
-            (*raiz)->pai->esq = NULL;
-        }else{
-            (*raiz)->pai->dir = NULL;
-        }
-    }
-    free(*raiz);
-}
-
-void removeComDoisFilhos(Avl **raiz){
-    Avl *aux = *raiz;
-    aux = aux->dir;
-    while(aux->esq != NULL){
-        aux = aux->esq;
-    }
-
-    char *value = aux->value;
-    if(aux->dir == NULL && aux->esq == NULL){
-        removeFolha(&aux);
-    }else{
-        removeComUmFilho(&aux);
-    }
-
-    strcpy((*raiz)->value, value);
-    free(aux);
-}
-
-
-void removerNodo(int val, Avl **raiz){
-    if(*raiz != NULL){
-        if((*raiz)->value == val){
-            if((*raiz)->dir == NULL && (*raiz)->esq == NULL){
-                removeFolha(raiz);
-            }else if((*raiz)->dir == NULL || (*raiz)->esq == NULL){
-                removeComUmFilho(raiz);
-            }else{
-                removeComDoisFilhos(raiz);
-            }
-        }else if(val < (*raiz)->value){
-            removerNodo(val, &((*raiz)->esq));
-        }else{
-            removerNodo(val, &((*raiz)->dir));
-        }
-    }
-}
-
-/* Quebra uma frase em palavras e adiciona elas na árvore
+/* Quebra uma frase em palavras e adiciona elas na Ã¡rvore
     - utiliza caracteres de quebra para separar as palavras
-    - caracter de quebra é considerado qualquer caracter que não seja uma letra maiuscula ou minuscula
+    - caracter de quebra Ã© considerado qualquer caracter que nÃ£o seja uma letra maiuscula ou minuscula
 */
-void getJustWords(char *text, Avl* letra[]){
+void getJustWords(char *text, Avl *letra[])
+{
     int i, j = 0;
     char str[50], c;
 
-    for(i = 0; text[i] != '\0'; i++){
+    for (i = 0; text[i] != '\0'; i++)
+    {
 
-        if(j > 50){
+        if (j > 50)
+        {
             // Caso uma palavra tenha mais de 50 caracteres
-            printf("ERRO: Palavra ultrapassou limite máximo de 50 caracteres.");
+            printf("ERRO: Uma palavra ultrapassou limite mÃ¡ximo de 50 caracteres.");
+            exit(1);
         }
 
-        if((text[i] >= 'a' && text[i] <= 'z') || (text[i] >= 'A' && text[i] <= 'Z')){
-            // Encontrou uma letra, então só adiciona na palavra
-            // A palavra deve ser armazenada com letras minúsculas
+        if ((text[i] >= 'a' && text[i] <= 'z') || (text[i] >= 'A' && text[i] <= 'Z'))
+        {
+            // Encontrou uma letra, entÃ£o sÃ³ adiciona na palavra
+            // A palavra deve ser armazenada com letras minÃºsculas
             c = tolower(text[i]);
             str[j] = c;
             j++;
-        } else {
-            // Encontrou um caracter de quebra, então adiciona a palavra à lista
+        }
+        else
+        {
+            // Encontrou um caracter de quebra, entÃ£o adiciona a palavra Ã  Ã¡rvore
 
-            // Evita salvar palavras sem conteúdo (previne casos de , seguidos de espaço por exemplo)
-            if(j != 0){
+            // Evita salvar palavras sem conteÃºdo (previne casos de , seguidos de espaÃ§o por exemplo)
+            if (j != 0)
+            {
                 str[j] = '\0';
                 c = tolower(str[0]);
                 inserirValorNaArvore(str, &(letra[c - 'a']), letra);
@@ -346,8 +311,9 @@ void getJustWords(char *text, Avl* letra[]){
         }
     }
 
-    // Adiciona a última palavra caso não encontre caracteres de quebra como o ponto no final do texto
-    if(j != 0){
+    // Adiciona a Ãºltima palavra caso nÃ£o encontre caracteres de quebra como o ponto no final do texto
+    if (j != 0)
+    {
         str[j] = '\0';
         c = tolower(str[0]);
         inserirValorNaArvore(str, &(letra[c - 'a']), letra);
@@ -355,9 +321,386 @@ void getJustWords(char *text, Avl* letra[]){
     }
 }
 
+void removeComUmFilho(Avl **nodo, Avl *h[])
+{
+    // Raiz da Ã¡rvore
+    Avl *raiz = h[(*nodo)->value[0] - 'a'];
+
+    if ((*nodo)->pai != NULL)
+    {
+        // Caso tenha pai
+
+        Avl *aux = *nodo;
+
+        // Nodo a remover estÃ¡ na esquerda do pai
+        if (strcmp((*nodo)->pai->value, (*nodo)->value) > 0)
+        {
+            // Filho do nodo removido estÃ¡ Ã  esquerda
+            if ((*nodo)->esq != NULL)
+            {
+                (*nodo)->esq->pai = (*nodo)->pai;
+                (*nodo)->pai->esq = (*nodo)->esq;
+                recalcularAltura(&(aux->esq), &raiz);
+            }
+            // Filho do nodo removido estÃ¡ Ã  direita
+            else
+            {
+                (*nodo)->dir->pai = (*nodo)->pai;
+                (*nodo)->pai->esq = (*nodo)->dir;
+                recalcularAltura(&(aux->dir), &raiz);
+            }
+        }
+        // Nodo a remover estÃ¡ na direita do pai
+        else
+        {
+            // Filho do nodo removido estÃ¡ Ã  esquerda
+            if ((*nodo)->esq != NULL)
+            {
+                (*nodo)->esq->pai = (*nodo)->pai;
+                (*nodo)->pai->dir = (*nodo)->esq;
+                recalcularAltura(&(aux->esq), &raiz);
+            }
+            // Filho do nodo removido estÃ¡ Ã  direita
+            else
+            {
+                (*nodo)->dir->pai = (*nodo)->pai;
+                (*nodo)->pai->dir = (*nodo)->dir;
+                recalcularAltura(&(aux->dir), &raiz);
+            }
+        }
+    }
+    else
+    {
+        // Caso nÃ£o tenha pai (chegou na raiz)
+        if ((*nodo)->esq != NULL)
+        {
+            (*nodo)->esq->pai = NULL;
+            *nodo = (*nodo)->esq;
+        }
+        else
+        {
+            (*nodo)->dir->pai = NULL;
+            *nodo = (*nodo)->dir;
+        }
+        h[(*nodo)->value[0] - 'a'] = *nodo;
+    }
+}
+
+void removeFolha(Avl **nodo, Avl *h[])
+{
+    // Raiz da Ã¡rvore
+    Avl *raiz = h[(*nodo)->value[0] - 'a'];
+
+    if ((*nodo)->pai != NULL)
+    {
+        // NÃ£o Ã© raiz da Ã¡rvore
+
+        Avl *aux = *nodo;
+
+        // Folha a remover estÃ¡ na esquerda
+        if ((*nodo)->pai->esq != NULL && strcmp((*nodo)->pai->esq->value, (*nodo)->value) == 0)
+        {
+            (*nodo)->pai->esq = NULL;
+        }
+        // Folha a remover estÃ¡ na direita
+        else
+        {
+            (*nodo)->pai->dir = NULL;
+        }
+        recalcularAltura(&aux, &raiz);
+    }
+    else
+    {
+        // Caso seja o Ãºnico elemento da Ã¡rvore remove no array de letras
+        h[(*nodo)->value[0] - 'a'] = NULL;
+    }
+    free(*nodo);
+}
+
+void removeComDoisFilhos(Avl **nodo, Avl *h[])
+{
+    Avl *aux = *nodo;
+    Avl raiz = *h[(*nodo)->value[0] - 'a'];
+
+    // ObtÃ©m o menor valor maior que o do nodo a ser removido
+    aux = aux->dir;
+    while (aux->esq != NULL)
+    {
+        aux = aux->esq;
+    }
+
+    // Copia os dados a serem transferidos
+    char value[50];
+    strcpy(value, aux->value);
+    int ocor = aux->ocor;
+
+    // Remove o nodo do menor valor maior que o do nodo a ser removido
+    if (aux->dir == NULL && aux->esq == NULL)
+    {
+        removeFolha(&aux, h);
+    }
+    else
+    {
+        removeComUmFilho(&aux, h);
+    }
+
+    // Copia os valores do nodo removido para o nodo que deveria ser removido originalmente
+    strcpy((*nodo)->value, value);
+    (*nodo)->ocor = ocor;
+}
+
+void removerNodo(char *val, Avl **raiz, Avl *h[])
+{
+    if (*raiz != NULL)
+    {
+        if (strcmp((*raiz)->value, val) == 0)
+        {
+            if ((*raiz)->dir == NULL && (*raiz)->esq == NULL)
+            {
+                removeFolha(raiz, h);
+            }
+            else if ((*raiz)->dir == NULL || (*raiz)->esq == NULL)
+            {
+                removeComUmFilho(raiz, h);
+            }
+            else
+            {
+                removeComDoisFilhos(raiz, h);
+            }
+        }
+        else if (strcmp(val, (*raiz)->value) < 0)
+        {
+            removerNodo(val, &((*raiz)->esq), h);
+        }
+        else
+        {
+            removerNodo(val, &((*raiz)->dir), h);
+        }
+    }
+    else
+    {
+        printf("Valor informado nÃ£o encontrado!\n");
+    }
+}
+
+void removerValor(char val[], Avl *h[])
+{
+    removerNodo(val, &h[val[0] - 'a'], h);
+}
+
+void consultaOcorrencias(char *val, Avl *root)
+{
+    if (root == NULL)
+    {
+        printf("A palavra %s nÃ£o tem ocorrencias.\n", val);
+        return;
+    }
+
+    if (strcmp(val, root->value) == 0)
+    {
+        printf("A palavra %s tem %d ocorrencias.\n", val, root->ocor);
+    }
+    else if (strcmp(val, root->value) > 0)
+    {
+        consultaOcorrencias(val, root->dir);
+    }
+    else
+    {
+        consultaOcorrencias(val, root->esq);
+    }
+}
+
+int getTamanhoPorLetra(Avl *nodo)
+{
+    if (nodo != NULL)
+    {
+        return 1 + getTamanhoPorLetra(nodo->esq) + getTamanhoPorLetra(nodo->dir);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int getOcorrenciaPorLetra(Avl *nodo)
+{
+    if (nodo != NULL)
+    {
+        return nodo->ocor + getOcorrenciaPorLetra(nodo->esq) + getOcorrenciaPorLetra(nodo->dir);
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int getTamanho(Avl *h[])
+{
+    int soma = 0, i;
+    for (i = 0; i < 26; i++)
+    {
+        soma += getTamanhoPorLetra(h[i]);
+    }
+    return soma;
+}
+
+int getOcorrencias(Avl *h[])
+{
+    int soma = 0, i;
+    for (i = 0; i < 26; i++)
+    {
+        soma += getOcorrenciaPorLetra(h[i]);
+    }
+    return soma;
+}
+
+// Ordem:
+// - A-Z: 1
+// - Z-A: 0
+void exibirPalavrasPorLetra(Avl **nodo, int ordem)
+{
+    if ((*nodo) != NULL)
+    {
+        if (ordem)
+        {
+            exibirPalavrasPorLetra(&(*nodo)->esq, ordem);
+            printf("%s - %d\n", (*nodo)->value, (*nodo)->ocor);
+            exibirPalavrasPorLetra(&(*nodo)->dir, ordem);
+        }
+        else
+        {
+            exibirPalavrasPorLetra(&(*nodo)->dir, ordem);
+            printf("%s - %d\n", (*nodo)->value, (*nodo)->ocor);
+            exibirPalavrasPorLetra(&(*nodo)->esq, ordem);
+        }
+    }
+}
+
+// Exibe todas as palavras
+//
+// Ordem:
+// - A-Z: 1
+// - Z-A: 0
+void exibirPalavras(Avl *h[], int ordem)
+{
+    int i;
+    if (ordem)
+    {
+        // A-Z
+        for (i = 0; i < 26; i++)
+        {
+            if (h[i] != NULL)
+            {
+                printf("%c:\n", 'A' + i);
+                exibirPalavrasPorLetra(&h[i], ordem);
+                printf("\n");
+            }
+        }
+    }
+    else
+    {
+        // Z-A
+        for (i = 25; i >= 0; i--)
+        {
+            if (h[i] != NULL)
+            {
+                printf("%c:\n", 'A' + i);
+                exibirPalavrasPorLetra(&h[i], ordem);
+                printf("\n");
+            }
+        }
+    }
+}
+
+void exibirPalavrasComNroOcorPorLetra(Avl *nodo, int ocor)
+{
+    if (nodo != NULL)
+    {
+        exibirPalavrasComNroOcorPorLetra(nodo->esq, ocor);
+        if (nodo->ocor == ocor)
+            printf("%s - %d\n", nodo->value, nodo->ocor);
+        exibirPalavrasComNroOcorPorLetra(nodo->dir, ocor);
+    }
+}
+
+void exibirPalavrasComNroOcor(Avl *h[], int ocor)
+{
+    int i;
+    for (i = 0; i < 26; i++)
+    {
+        if (h[i] != NULL)
+        {
+            exibirPalavrasComNroOcorPorLetra(h[i], ocor);
+        }
+    }
+}
+
+// Reduz a ocorrÃªncia de uma palavra em uma unidade deletando caso chege a 0
+void reduzirOcorrencia(char *val, Avl **root, Avl *h[])
+{
+    if (*root == NULL)
+    {
+        printf("A palavra %s nÃ£o tem ocorrencias.\n", val);
+        return;
+    }
+
+    if (strcmp(val, (*root)->value) == 0)
+    {
+        if ((*root)->ocor > 1)
+        {
+            (*root)->ocor -= 1;
+        }
+        else
+        {
+            removerValor(val, h);
+        }
+    }
+    else if (strcmp(val, (*root)->value) > 0)
+    {
+        reduzirOcorrencia(val, &(*root)->dir, h);
+    }
+    else
+    {
+        reduzirOcorrencia(val, &(*root)->esq, h);
+    }
+}
+int getMaiorNumOcorLetra(Avl *nodo)
+{
+    int esq, dir, max;
+    if (nodo != NULL)
+    {
+        esq = getMaiorNumOcorLetra(nodo->esq);
+        dir = getMaiorNumOcorLetra(nodo->dir);
+        max = dir > esq ? dir : esq;
+        return nodo->ocor > max ? nodo->ocor : max;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int getMaiorNumOcor(Avl *h[])
+{
+    int i, maior = 0, aux;
+    for (i = 0; i < 26; i++)
+    {
+        if (h[i] != NULL)
+        {
+            aux = getMaiorNumOcorLetra(h[i]);
+            if (aux > maior)
+            {
+                maior = aux;
+            }
+        }
+    }
+
+    return maior;
+}
 
 // Exibe o menu
-void showMenu(){
+void showMenu()
+{
     printf("Menu:\n");
     printf("0. Sair\n");
     printf("1. Inserir mais texto\n");
@@ -367,44 +710,114 @@ void showMenu(){
     printf("5. Mostrar total de palavras\n");
     printf("6. Mostrar total de palavras diferentes\n");
     printf("7. Exibir lista de palavras em ordem alfabetica\n");
-    printf("8. Pesquisar palavras por letra\n");
-    printf("9. Exibir lista de palavras em ordem de ocorrencias\n");
-    printf("10. Filtrar palavras por numero de ocorrencias\n");
+    printf("8. Exibir palavras por letra\n");
+    printf("9. Exibir palavras com maior numero de ocorrencias\n");
+    printf("10. Mostrar palavra de ocorrencia unica\n");
+    printf("11. Decrementar ocorrencias de uma palavra\n");
     printf("\n");
 }
 
-void mostrarConteudo( Avl* letra[]){
-    int i;
-    for(i = 0; i < 26; i++){
-            if(letra[i] != NULL){
-                printf("%c:\n", 'A' + i);
-                printPreFix(letra[i]);
-                printf("\n");
-            }
-        }
-}
+void main()
+{
+    // Inicia o cabeÃ§alho
+    Avl *h[26];
+    init(h);
 
-void main(){
-    // Inicia o cabeçalho
-    Avl h[26];
-    init(&h);
-
-    // Obtém a frase
+    // ObtÃ©m a frase
     char text[5000];
     printf("Informe o texto:\n");
-    //gets(text);
-    strcpy(text, "ag ad am af aa ab ae ay ap ac az");
+    gets(text);
 
-    // Declara variáveis de uso geral
+    // Declara variÃ¡veis de uso geral
     int opt, subopt;
     Avl *aux;
 
-    // Processa frase removendo sinais de pontuação e alocando na lista encadeada
+    // Processa frase
     getJustWords(text, h);
 
-    mostrarConteudo(h);
+    do
+    {
+        showMenu();
+
+        scanf("%d", &opt);
+        switch (opt)
+        {
+        case 1:
+            printf("\nInforme o texto:\n");
+            // Limpa o buffer
+            gets(text);
+
+            // Le  o texto
+            gets(text);
+
+            getJustWords(text, h);
+            break;
+        case 2:
+            init(h);
+            printf("palavras removidas!\n\n");
+            break;
+        case 3:
+            printf("\nInforme a palavra a ser buscada:\n");
+            scanf("%s", text);
+            consultaOcorrencias(text, h[text[0] - 'a']);
+            printf("\n");
+            break;
+        case 4:
+            printf("\nInforme a palavra a ser removida:\n");
+            scanf("%s", &text);
+            removerValor(text, h);
+            break;
+        case 5:
+            printf("\nTotal de palavras: %d\n\n", getOcorrencias(h));
+            break;
+        case 6:
+            printf("\nTotal de palavras diferentes: %d\n\n", getTamanho(h));
+            break;
+        case 7:
+
+            // Le a ordem de ordenacao
+            do
+            {
+                printf("\nSelecione a ordem:\n");
+                printf("1. A-Z\n");
+                printf("2. Z-A\n");
+                scanf("%d", &subopt);
+            } while (subopt != 1 && subopt != 2);
+            printf("\n");
+            // Escreve
+            if (subopt == 1)
+            {
+                // A-Z
+                exibirPalavras(h, 1);
+            }
+            else
+            {
+                // Z-A
+                exibirPalavras(h, 0);
+            }
+            printf("\n");
+            break;
+        case 8:
+            printf("Informe a letra a ser buscada:\n");
+            scanf("%s", text);
+
+            exibirPalavrasPorLetra(&(h[text[0] - 'a']), 1);
+            printf("\n");
+            break;
+        case 9:
+            exibirPalavrasComNroOcor(h, getMaiorNumOcor(h));
+            printf("\n");
+            break;
+        case 10:
+            exibirPalavrasComNroOcor(h, 1);
+            printf("\n");
+            break;
+        case 11:
+            printf("Informe a palavra a ter seu nÃºmero de ocorrencias decrementado:\n");
+            scanf("%s", text);
+            reduzirOcorrencia(text, &h[text[0] - 'a'], h);
+            printf("\n");
+            break;
+        }
+    } while (opt != 0);
 }
-
-
-
-
