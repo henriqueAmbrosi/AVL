@@ -14,6 +14,16 @@ struct a
 
 typedef struct a Avl;
 
+// Inicializa ou reseta o header
+void init(Avl *letra[])
+{
+    int i;
+    for (i = 0; i < 26; i++)
+    {
+        letra[i] = NULL;
+    }
+}
+
 // Retorna a altura ou zero caso o nodo esteja nulo
 int getAltura(Avl *node)
 {
@@ -28,16 +38,6 @@ int getFatorBalanceamento(Avl *node)
     if (node == NULL)
         return 0;
     return getAltura(node->dir) - getAltura(node->esq);
-}
-
-// Inicializa ou reseta o header
-void init(Avl *letra[])
-{
-    int i;
-    for (i = 0; i < 26; i++)
-    {
-        letra[i] = NULL;
-    }
 }
 
 // Rotação para a esquerda
@@ -201,7 +201,7 @@ void recalcularAltura(Avl **nodo, Avl *letra[])
 // Cria e insere o nodo na árvore
 void inserirNodo(Avl **pai, char *val, Avl *letra[])
 {
-    Avl *novo = (Avl *)malloc(sizeof(Avl));
+    Avl *novo = (Avl *) malloc(sizeof(Avl));
     strcpy(novo->value, val);
     novo->ocor = 1;
     novo->altura = 1;
@@ -227,7 +227,7 @@ void inserirValorNaArvore(char *val, Avl **raiz, Avl *letra[])
     // Primeira inserção na árvore
     if (*raiz == NULL)
     {
-        *raiz = (Avl *)malloc(sizeof(Avl));
+        *raiz = (Avl *) malloc(sizeof(Avl));
         strcpy((*raiz)->value, val);
         (*raiz)->ocor = 1;
         (*raiz)->altura = 1;
@@ -321,10 +321,10 @@ void getJustWords(char *text, Avl *letra[])
     }
 }
 
-void removeComUmFilho(Avl **nodo, Avl *h[])
+void removeComUmFilho(Avl **nodo, Avl *letterHashTable[])
 {
     // Raiz da árvore
-    Avl *raiz = h[(*nodo)->value[0] - 'a'];
+    Avl *raiz = letterHashTable[(*nodo)->value[0] - 'a'];
 
     if ((*nodo)->pai != NULL)
     {
@@ -377,19 +377,19 @@ void removeComUmFilho(Avl **nodo, Avl *h[])
             (*nodo)->esq->pai = NULL;
             *nodo = (*nodo)->esq;
         }
-        else
-        {
+        else if ((*nodo)->dir != NULL) {
             (*nodo)->dir->pai = NULL;
             *nodo = (*nodo)->dir;
         }
-        h[(*nodo)->value[0] - 'a'] = *nodo;
+		recalcularAltura(&(*nodo), &raiz);
+        letterHashTable[(*nodo)->value[0] - 'a'] = *nodo;
     }
 }
 
-void removeFolha(Avl **nodo, Avl *h[])
+void removeFolha(Avl **nodo, Avl *letterHashTable[])
 {
     // Raiz da árvore
-    Avl *raiz = h[(*nodo)->value[0] - 'a'];
+    Avl *raiz = letterHashTable[(*nodo)->value[0] - 'a'];
 
     if ((*nodo)->pai != NULL)
     {
@@ -412,15 +412,14 @@ void removeFolha(Avl **nodo, Avl *h[])
     else
     {
         // Caso seja o único elemento da árvore remove no array de letras
-        h[(*nodo)->value[0] - 'a'] = NULL;
+        letterHashTable[(*nodo)->value[0] - 'a'] = NULL;
     }
     free(*nodo);
 }
 
-void removeComDoisFilhos(Avl **nodo, Avl *h[])
+void removeComDoisFilhos(Avl **nodo, Avl *letterHashTable[])
 {
     Avl *aux = *nodo;
-    Avl raiz = *h[(*nodo)->value[0] - 'a'];
 
     // Obtém o menor valor maior que o do nodo a ser removido
     aux = aux->dir;
@@ -437,11 +436,11 @@ void removeComDoisFilhos(Avl **nodo, Avl *h[])
     // Remove o nodo do menor valor maior que o do nodo a ser removido
     if (aux->dir == NULL && aux->esq == NULL)
     {
-        removeFolha(&aux, h);
+        removeFolha(&aux, letterHashTable);
     }
     else
     {
-        removeComUmFilho(&aux, h);
+        removeComUmFilho(&aux, letterHashTable);
     }
 
     // Copia os valores do nodo removido para o nodo que deveria ser removido originalmente
@@ -449,7 +448,7 @@ void removeComDoisFilhos(Avl **nodo, Avl *h[])
     (*nodo)->ocor = ocor;
 }
 
-void removerNodo(char *val, Avl **raiz, Avl *h[])
+void removerNodo(char *val, Avl **raiz, Avl *letterHashTable[])
 {
     if (*raiz != NULL)
     {
@@ -457,24 +456,24 @@ void removerNodo(char *val, Avl **raiz, Avl *h[])
         {
             if ((*raiz)->dir == NULL && (*raiz)->esq == NULL)
             {
-                removeFolha(raiz, h);
+                removeFolha(raiz, letterHashTable);
             }
             else if ((*raiz)->dir == NULL || (*raiz)->esq == NULL)
             {
-                removeComUmFilho(raiz, h);
+                removeComUmFilho(raiz, letterHashTable);
             }
             else
             {
-                removeComDoisFilhos(raiz, h);
+                removeComDoisFilhos(raiz, letterHashTable);
             }
         }
         else if (strcmp(val, (*raiz)->value) < 0)
         {
-            removerNodo(val, &((*raiz)->esq), h);
+            removerNodo(val, &((*raiz)->esq), letterHashTable);
         }
         else
         {
-            removerNodo(val, &((*raiz)->dir), h);
+            removerNodo(val, &((*raiz)->dir), letterHashTable);
         }
     }
     else
@@ -483,9 +482,9 @@ void removerNodo(char *val, Avl **raiz, Avl *h[])
     }
 }
 
-void removerValor(char val[], Avl *h[])
+void removerValor(char val[], Avl *letterHashTable[])
 {
-    removerNodo(val, &h[val[0] - 'a'], h);
+    removerNodo(val, &letterHashTable[val[0] - 'a'], letterHashTable);
 }
 
 void consultaOcorrencias(char *val, Avl *root)
@@ -698,7 +697,6 @@ int getMaiorNumOcor(Avl *h[])
     return maior;
 }
 
-// Exibe o menu
 void showMenu()
 {
     printf("Menu:\n");
@@ -719,9 +717,9 @@ void showMenu()
 
 void main()
 {
-    // Inicia o cabeçalho
-    Avl *h[26];
-    init(h);
+    // Inicia a tabela hash
+    Avl *letterHashTable[26];
+    init(letterHashTable);
 
     // Obtém a frase
     char text[5000];
@@ -733,7 +731,7 @@ void main()
     Avl *aux;
 
     // Processa frase
-    getJustWords(text, h);
+    getJustWords(text, letterHashTable);
 
     do
     {
@@ -750,28 +748,28 @@ void main()
             // Le  o texto
             gets(text);
 
-            getJustWords(text, h);
+            getJustWords(text, letterHashTable);
             break;
         case 2:
-            init(h);
+            init(letterHashTable);
             printf("palavras removidas!\n\n");
             break;
         case 3:
             printf("\nInforme a palavra a ser buscada:\n");
             scanf("%s", text);
-            consultaOcorrencias(text, h[text[0] - 'a']);
+            consultaOcorrencias(text, letterHashTable[text[0] - 'a']);
             printf("\n");
             break;
         case 4:
             printf("\nInforme a palavra a ser removida:\n");
             scanf("%s", &text);
-            removerValor(text, h);
+            removerValor(text, letterHashTable);
             break;
         case 5:
-            printf("\nTotal de palavras: %d\n\n", getOcorrencias(h));
+            printf("\nTotal de palavras: %d\n\n", getOcorrencias(letterHashTable));
             break;
         case 6:
-            printf("\nTotal de palavras diferentes: %d\n\n", getTamanho(h));
+            printf("\nTotal de palavras diferentes: %d\n\n", getTamanho(letterHashTable));
             break;
         case 7:
 
@@ -788,12 +786,12 @@ void main()
             if (subopt == 1)
             {
                 // A-Z
-                exibirPalavras(h, 1);
+                exibirPalavras(letterHashTable, 1);
             }
             else
             {
                 // Z-A
-                exibirPalavras(h, 0);
+                exibirPalavras(letterHashTable, 0);
             }
             printf("\n");
             break;
@@ -801,21 +799,21 @@ void main()
             printf("Informe a letra a ser buscada:\n");
             scanf("%s", text);
 
-            exibirPalavrasPorLetra(&(h[text[0] - 'a']), 1);
+            exibirPalavrasPorLetra(&(letterHashTable[text[0] - 'a']), 1);
             printf("\n");
             break;
         case 9:
-            exibirPalavrasComNroOcor(h, getMaiorNumOcor(h));
+            exibirPalavrasComNroOcor(letterHashTable, getMaiorNumOcor(letterHashTable));
             printf("\n");
             break;
         case 10:
-            exibirPalavrasComNroOcor(h, 1);
+            exibirPalavrasComNroOcor(letterHashTable, 1);
             printf("\n");
             break;
         case 11:
             printf("Informe a palavra a ter seu número de ocorrencias decrementado:\n");
             scanf("%s", text);
-            reduzirOcorrencia(text, &h[text[0] - 'a'], h);
+            reduzirOcorrencia(text, &letterHashTable[text[0] - 'a'], letterHashTable);
             printf("\n");
             break;
         }
